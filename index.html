@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOPLE — Gwangju Online Guidebook</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;font-size:15px;}
+:root{
+  --bg:#0B0D11; --s1:#111418; --s2:#161B22; --s3:#1E242D;
+  --border:#272D38; --t1:#F0F4FF; --t2:#8B95A8; --t3:#4A5568;
+  --acc:#FF7B29; --grn:#22C55E; --red:#EF4444; --blue:#3B82F6;
+  --r:6px; --r2:10px; --bar:52px;
+}
+body{background:var(--bg);color:var(--t1);font-family:'Syne','Noto Sans KR',sans-serif;overflow-x:hidden;line-height:1.6;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--acc);border-radius:2px;}
+
+/* ─ TOPBAR ─ */
+#bar{
+  position:fixed;top:0;left:0;right:0;z-index:900;
+  height:var(--bar);background:rgba(11,13,17,.94);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;
+}
+.bar-logo{font-weight:800;font-size:.95rem;letter-spacing:.04em;color:var(--t1);}
+.bar-logo b{color:var(--acc);}
+.bar-right{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--t3);display:flex;align-items:center;gap:.7rem;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);}
+
+/* ─ HERO ─ */
+.hero{
+  min-height:100svh;padding-top:var(--bar);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;background:var(--bg);
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,123,41,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,123,41,.035) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 20%,transparent 100%);
+}
+.hero-glow{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(255,123,41,.06) 0%,transparent 68%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+.hero-inner{position:relative;z-index:2;text-align:center;padding:2rem 1.5rem;max-width:860px;width:100%;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.6rem;background:var(--s2);border:1px solid var(--border);padding:.38rem 1rem;border-radius:99px;margin-bottom:2rem;font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--t2);letter-spacing:.08em;animation:up .6s ease both;}
+.hero-badge{display:inline-block;background:var(--acc);font-weight:800;font-size:.95rem;color:#000;padding:.28rem .95rem;letter-spacing:.08em;border-radius:4px;margin-bottom:1.1rem;animation:up .6s .1s ease both;}
+.hero-h1{font-weight:800;font-size:clamp(4rem,15vw,9.5rem);color:#fff;line-height:.9;letter-spacing:-.02em;animation:up .6s .2s ease both;}
+.hero-sub{font-size:clamp(.88rem,2vw,1.05rem);color:var(--t2);margin-top:1.15rem;line-height:1.7;animation:up .6s .32s ease both;}
+.hero-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:.75rem;margin-top:2.5rem;animation:up .6s .44s ease both;}
+.stat{background:var(--s2);border:1px solid var(--border);padding:.55rem 1.1rem;border-radius:var(--r);text-align:center;}
+.sv{font-weight:700;font-size:1rem;color:var(--acc);}
+.sl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--t3);letter-spacing:.07em;margin-top:.1rem;}
+
+/* ─ TOC (non-sticky) ─ */
+.toc-wrap{background:var(--s1);border-bottom:1px solid var(--border);padding:1.6rem 1.5rem;}
+.toc-in{max-width:900px;margin:0 auto;}
+.toc-lbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t3);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.85rem;}
+.toc-row{display:flex;flex-wrap:wrap;gap:.4rem;}
+.toc-btn{
+  display:flex;align-items:center;gap:.45rem;
+  background:var(--s2);border:1px solid var(--border);
+  padding:.48rem .9rem;border-radius:var(--r);
+  text-decoration:none;color:var(--t2);
+  font-weight:600;font-size:.76rem;transition:all .17s;white-space:nowrap;
+}
+.toc-btn:hover,.toc-btn.on{background:rgba(255,123,41,.09);border-color:rgba(255,123,41,.38);color:var(--acc);}
+.tn{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--t3);font-weight:400;transition:color .17s;}
+.toc-btn:hover .tn,.toc-btn.on .tn{color:rgba(255,123,41,.55);}
+
+/* ─ SECTION ─ */
+.sec{padding:5rem 1.5rem;}
+.si{max-width:900px;margin:0 auto;}
+.chip{display:inline-flex;align-items:center;background:rgba(255,123,41,.08);border:1px solid rgba(255,123,41,.2);font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--acc);padding:.2rem .62rem;border-radius:99px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
+.sh{font-weight:800;font-size:clamp(1.7rem,4.5vw,2.6rem);color:var(--t1);line-height:1.1;margin-bottom:.3rem;}
+.sh-ko{font-weight:500;font-size:clamp(.8rem,1.8vw,.95rem);color:var(--t3);margin-bottom:.9rem;}
+.sec-sub{font-size:.875rem;color:var(--t2);line-height:1.8;max-width:640px;margin-bottom:2.5rem;}
+
+/* ─ PROSE BLOCK (EN primary, KO secondary) ─ */
+.pb{margin-bottom:2rem;border-left:2px solid var(--border);padding-left:1.35rem;position:relative;}
+.pb::before{content:'';position:absolute;left:-5px;top:.55rem;width:8px;height:8px;border-radius:50%;background:var(--acc);border:2px solid var(--bg);}
+.pe{font-size:.92rem;line-height:2;color:var(--t1);margin-bottom:.45rem;}
+.pe strong{color:#fff;font-weight:700;}
+.pe em{color:var(--acc);font-style:normal;}
+.pk{font-size:.76rem;line-height:1.8;color:var(--t3);}
+
+/* ─ VISUAL STAT ROW ─ */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem;margin:2rem 0;}
+.stat-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;}
+.sc-val{font-weight:800;font-size:1.4rem;color:var(--acc);line-height:1;margin-bottom:.3rem;}
+.sc-label{font-size:.75rem;color:var(--t2);}
+.sc-sub{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--t3);margin-top:.15rem;}
+
+/* ─ REAL QUOTE ─ */
+.rq{background:var(--s2);border:1px solid var(--border);border-left:3px solid var(--acc);border-radius:0 var(--r) var(--r) 0;padding:1.2rem 1.5rem;margin:1.5rem 0;}
+.rq-en{font-size:.9rem;color:var(--t1);line-height:1.9;font-style:italic;margin-bottom:.4rem;}
+.rq-ko{font-size:.76rem;color:var(--t3);line-height:1.7;font-style:italic;margin-bottom:.5rem;}
+.rq-src{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t3);letter-spacing:.04em;}
+
+/* ─ TIMELINE ─ */
+.tl-sec{background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.tl-table{width:100%;border-collapse:collapse;}
+.tl-tr{border-bottom:1px solid var(--border);opacity:0;transform:translateX(-10px);transition:opacity .4s,transform .4s;}
+.tl-tr.vis{opacity:1;transform:none;}
+.tl-tr:last-child{border-bottom:none;}
+.td-d{width:76px;padding:1.15rem .8rem 1.15rem 0;vertical-align:top;}
+.td-dv{font-weight:800;font-size:1rem;color:var(--acc);line-height:1;}
+.td-ds{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--t3);margin-top:.18rem;letter-spacing:.05em;}
+.td-p{width:18px;padding:1.15rem 0;vertical-align:top;position:relative;}
+.td-p::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:0;bottom:0;width:1px;background:var(--border);}
+.tl-dot{position:absolute;left:50%;transform:translateX(-50%);top:1.42rem;width:8px;height:8px;border-radius:50%;background:var(--acc);border:2px solid var(--s1);z-index:1;}
+.tl-tr:last-child .td-p::before{height:50%;}
+.td-c{padding:1.15rem 0 1.15rem 1rem;vertical-align:top;}
+.tl-en{font-size:.82rem;color:var(--t1);line-height:1.8;margin-bottom:.22rem;}
+.tl-ko{font-size:.72rem;color:var(--t3);line-height:1.65;}
+
+/* ─ CARD ─ */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;transition:border-color .2s;}
+.card:hover{border-color:rgba(255,123,41,.28);}
+.card-hd{background:var(--s2);border-bottom:1px solid var(--border);padding:.9rem 1.35rem;display:flex;align-items:center;gap:.75rem;}
+.card-n{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--acc);background:rgba(255,123,41,.1);border:1px solid rgba(255,123,41,.2);padding:.17rem .48rem;border-radius:4px;flex-shrink:0;}
+.card-t{font-weight:700;font-size:.97rem;color:var(--t1);}
+.card-sub{font-size:.68rem;color:var(--t3);margin-top:.1rem;}
+.card-body{padding:1.25rem 1.35rem;}
+
+/* ─ BOOK ─ */
+.book-layout{display:grid;grid-template-columns:130px 1fr;gap:1.8rem;align-items:start;}
+@media(max-width:480px){.book-layout{grid-template-columns:1fr;}}
+.book-cover{background:var(--s2);border:1px solid var(--border);aspect-ratio:2/3;border-radius:var(--r2);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem .8rem;text-align:center;box-shadow:4px 4px 0 var(--acc);position:relative;overflow:hidden;}
+.book-cover::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,123,41,.025) 4px,rgba(255,123,41,.025) 5px);}
+.bc-t{font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:1.1rem;color:var(--t1);line-height:1.3;position:relative;}
+.bc-bar{width:1.3rem;height:1px;background:var(--acc);margin:.6rem auto;position:relative;}
+.bc-e{font-size:.66rem;color:var(--t3);font-family:'JetBrains Mono',monospace;position:relative;}
+.bc-a{font-weight:700;font-size:.66rem;color:var(--acc);margin-top:.55rem;position:relative;}
+.meta-row{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.9rem;}
+.meta-chip{background:var(--s2);border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.63rem;color:var(--t2);padding:.17rem .52rem;border-radius:4px;}
+.meta-chip.hot{border-color:rgba(255,123,41,.35);color:var(--acc);}
+
+/* ─ CHAPTER TABLE ─ */
+.ch-table{width:100%;border-collapse:collapse;margin:0;}
+.ch-tr{border-bottom:1px solid var(--border);}
+.ch-tr:last-child{border-bottom:none;}
+.ch-tr:hover td{background:rgba(255,123,41,.025);}
+.ch-n{width:2.4rem;padding:.85rem .4rem .85rem 1.35rem;font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--acc);vertical-align:top;}
+.ch-b{padding:.85rem 1.35rem .85rem 0;vertical-align:top;}
+.ch-te{font-weight:700;font-size:.83rem;color:var(--t1);margin-bottom:.2rem;}
+.ch-en{font-size:.78rem;color:var(--t2);line-height:1.65;margin-bottom:.18rem;}
+.ch-ko{font-size:.7rem;color:var(--t3);line-height:1.6;}
+
+/* ─ CONNECT BOX ─ */
+.connect{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:.95rem 1.15rem;margin-top:1rem;}
+.connect-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--acc);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.42rem;}
+.connect-en{font-size:.8rem;color:var(--t2);line-height:1.75;}
+.connect-en strong{color:var(--t1);}
+.connect-ko{font-size:.7rem;color:var(--t3);line-height:1.65;margin-top:.32rem;}
+
+/* ─ TIP ─ */
+.tip{background:rgba(255,123,41,.05);border:1px solid rgba(255,123,41,.15);border-radius:var(--r);padding:.85rem .95rem;margin-top:.9rem;}
+.tip-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--acc);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35rem;}
+.tip-en{font-size:.8rem;color:var(--t2);line-height:1.75;}
+.tip-ko{font-size:.7rem;color:var(--t3);line-height:1.65;margin-top:.28rem;}
+
+/* ─ SITE CARDS ─ */
+.site-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:.9rem;opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s,border-color .2s;}
+.site-card.vis{opacity:1;transform:none;}
+.site-card:hover{border-color:rgba(255,123,41,.3);}
+.sc-hd{background:var(--s2);border-bottom:1px solid var(--border);padding:.9rem 1.35rem;display:flex;align-items:center;gap:.75rem;}
+.sc-idx{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--acc);background:rgba(255,123,41,.1);border:1px solid rgba(255,123,41,.2);padding:.17rem .48rem;border-radius:4px;flex-shrink:0;}
+.sc-nm{font-weight:700;font-size:.95rem;color:var(--t1);}
+.sc-nm-sub{font-size:.66rem;color:var(--t3);margin-top:.1rem;}
+.sc-bd{padding:1.25rem 1.35rem;}
+.sc-en{font-size:.87rem;line-height:1.9;color:var(--t1);margin-bottom:.38rem;}
+.sc-en strong{color:#fff;}
+.sc-en em{color:var(--acc);font-style:normal;}
+.sc-ko{font-size:.73rem;line-height:1.75;color:var(--t3);margin-bottom:.85rem;}
+
+/* ─ TAGS ─ */
+.tags{display:flex;flex-wrap:wrap;gap:.38rem;margin-top:.9rem;}
+.tag{background:rgba(255,123,41,.08);border:1px solid rgba(255,123,41,.2);color:var(--acc);font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.17rem .55rem;border-radius:99px;letter-spacing:.04em;}
+.tag.dim{background:var(--s3);border-color:var(--border);color:var(--t3);}
+
+/* ─ FOOD ─ */
+.food-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+@media(max-width:480px){.food-grid{grid-template-columns:1fr;}}
+.fc{background:var(--s1);border:1px solid var(--border);border-top:2px solid var(--acc);border-radius:var(--r);padding:1.1rem;transition:background .2s,transform .2s;}
+.fc:hover{background:var(--s2);transform:translateY(-2px);}
+.fc.wide{grid-column:span 2;}
+@media(max-width:480px){.fc.wide{grid-column:span 1;}}
+.fc-type{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--acc);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem;}
+.fc-name{font-weight:700;font-size:.92rem;color:var(--t1);margin-bottom:.42rem;}
+.fc-en{font-size:.78rem;color:var(--t2);line-height:1.7;margin-bottom:.22rem;}
+.fc-ko{font-size:.7rem;color:var(--t3);line-height:1.65;}
+.fc-tip{margin-top:.7rem;background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:.62rem .8rem;}
+.fc-tl{font-size:.74rem;color:var(--t2);line-height:1.7;}
+.fc-tl strong{color:var(--acc);}
+.fc-tl em{color:var(--t3);font-style:normal;}
+.fc-meta{margin-top:.55rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t3);}
+.cafe-note{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:.95rem 1.1rem;margin-top:.9rem;display:flex;gap:.75rem;}
+.cafe-txt{font-size:.78rem;color:var(--t2);line-height:1.8;}
+.cafe-txt strong{color:var(--t1);}
+.cafe-txt em{color:var(--t3);font-style:normal;display:block;margin-top:.28rem;}
+
+/* ─ OUTRO ─ */
+.outro{background:var(--s1);border-top:1px solid var(--border);padding:4rem 1.5rem;text-align:center;}
+.outro-badge{display:inline-block;background:var(--acc);font-weight:800;font-size:.92rem;color:#000;padding:.22rem .9rem;border-radius:4px;margin-bottom:1.4rem;letter-spacing:.06em;}
+.outro-q{font-weight:700;font-size:clamp(1rem,3vw,1.5rem);color:var(--t1);max-width:520px;margin:0 auto .45rem;line-height:1.5;}
+.outro-ko{font-size:.82rem;color:var(--t3);max-width:520px;margin:.45rem auto 0;line-height:1.75;}
+.outro-c{font-family:'JetBrains Mono',monospace;font-size:.63rem;color:var(--t3);margin-top:1.8rem;letter-spacing:.08em;}
+
+/* ─ SECTION BG VARIANTS ─ */
+.bg-s1{background:var(--s1);border-top:1px solid var(--border);}
+.bg-bg{background:var(--bg);}
+
+/* ─ DIVIDER ─ */
+.divider{height:1px;background:var(--border);margin:2rem 0;}
+
+/* ─ INLINE BADGE ─ */
+.badge{display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,123,41,.08);border:1px solid rgba(255,123,41,.2);color:var(--acc);font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:.2rem .6rem;border-radius:4px;vertical-align:middle;margin:0 .2rem;}
+
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header id="bar">
+  <div class="bar-logo"><b>KOPLE</b> · Online Guidebook</div>
+  <div class="bar-right"><span class="live-dot"></span><span>Gwangju</span><span>1980.05.18</span></div>
+</header>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span style="color:var(--grn)">●</span> Today's Journey · 오늘의 여정</div>
+    <div class="hero-badge">KOPLE™</div>
+    <h1 class="hero-h1">ONLINE<br>GUIDEBOOK</h1>
+    <p class="hero-sub">
+      Gwangju's Heart of Democracy<br>
+      <span style="opacity:.5;font-size:.9em;">광주 민주주의의 심장을 걷다</span>
+    </p>
+    <div class="hero-stats">
+      <div class="stat"><div class="sv">1980.05.18</div><div class="sl">Uprising Date</div></div>
+      <div class="stat"><div class="sv">10 Days</div><div class="sl">열흘의 항쟁</div></div>
+      <div class="stat"><div class="sv">165+</div><div class="sl">Confirmed Deaths</div></div>
+      <div class="stat"><div class="sv">UNESCO</div><div class="sl">Memory of World</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TABLE OF CONTENTS ══ -->
+<nav class="toc-wrap" id="toc">
+  <div class="toc-in">
+    <div class="toc-lbl">// Table of Contents · 목차</div>
+    <div class="toc-row">
+      <a class="toc-btn" href="#context"><span class="tn">01</span> Before 5.18 · 배경</a>
+      <a class="toc-btn" href="#history"><span class="tn">02</span> The Uprising · 5.18</a>
+      <a class="toc-btn" href="#after"><span class="tn">03</span> After 5.18 · 이후</a>
+      <a class="toc-btn" href="#book"><span class="tn">04</span> Human Acts · 소년이 온다</a>
+      <a class="toc-btn" href="#sites"><span class="tn">05</span> Sites · 방문지</a>
+      <a class="toc-btn" href="#food"><span class="tn">06</span> Food · 맛집</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ 01 CONTEXT ══ -->
+<section class="sec bg-bg" id="context">
+  <div class="si">
+    <div class="chip">// 01 · Before 5.18</div>
+    <h2 class="sh">South Korea Before the Uprising</h2>
+    <p class="sh-ko">5.18 이전 대한민국의 상황</p>
+    <p class="sec-sub">To understand why Gwangju erupted, you need to understand what came before it.</p>
+
+    <!-- visual timeline of regimes -->
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:1.4rem;margin-bottom:2rem;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem;">// Korean Political History</div>
+      <div style="display:flex;flex-direction:column;gap:.7rem;">
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:.8rem;align-items:center;">
+          <div style="font-weight:800;font-size:.82rem;color:var(--t3);">1948–1960</div>
+          <div style="font-size:.8rem;color:var(--t2);">🏛️ <strong style="color:var(--t1);">Syngman Rhee</strong> — First President. Authoritarian rule. Ended by the April 19 Student Revolution (4.19혁명).</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:.8rem;align-items:center;">
+          <div style="font-weight:800;font-size:.82rem;color:var(--t3);">1961–1979</div>
+          <div style="font-size:.8rem;color:var(--t2);">⚔️ <strong style="color:var(--t1);">Park Chung-hee</strong> — Military coup. 18 years of authoritarian rule. Rapid economic growth, but no political freedom. Assassinated by his own intelligence chief on Oct 26, 1979.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:.8rem;align-items:center;">
+          <div style="font-weight:800;font-size:.82rem;color:var(--t3);">Dec 12, 1979</div>
+          <div style="font-size:.8rem;color:var(--t2);">🔴 <strong style="color:var(--acc);">12.12 Military Coup (하극상 쿠데타)</strong> — General Chun Doo-hwan seizes control of the military in an internal coup. The "Seoul Spring" — a brief period of democratic hope — is crushed.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:.8rem;align-items:center;">
+          <div style="font-weight:800;font-size:.82rem;color:var(--t3);">Spring 1980</div>
+          <div style="font-size:.8rem;color:var(--t2);">📢 <strong style="color:var(--t1);">The Seoul Spring (서울의 봄)</strong> — Nationwide pro-democracy protests. Students and citizens demand a new constitution and end to martial law. Chun responds by expanding martial law nationwide on May 17.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pb">
+      <p class="pe">After 18 years under Park Chung-hee's authoritarian rule, South Koreans finally saw a window for democracy open in late 1979. Park's assassination created a power vacuum — and citizens across the country took to the streets, demanding free elections and a democratic constitution. This brief moment of hope became known as the <strong>"Seoul Spring" (서울의 봄).</strong></p>
+      <p class="pk">박정희 18년 독재 이후, 1979년 그의 암살로 권력 공백이 생기며 민주화의 가능성이 열렸습니다. 전국 각지에서 민주주의를 요구하는 시위가 일었고, 이를 '서울의 봄'이라 부릅니다.</p>
+    </div>
+
+    <div class="pb">
+      <p class="pe">General Chun Doo-hwan had other plans. On December 12, 1979, he staged an internal military coup — arresting the army chief of staff and seizing control of the armed forces. By May 1980, as pro-democracy protests grew louder, <strong>Chun extended martial law to the entire country on May 17</strong>, closed all universities, sealed the National Assembly, and arrested opposition leaders including Kim Dae-jung. The Seoul Spring was over. What came next was Gwangju.</p>
+      <p class="pk">전두환은 1979년 12월 12일 군사 쿠데타를 일으켜 군권을 장악했습니다. 1980년 5월 17일, 전국 비상계엄을 선포하고 대학을 폐쇄, 국회를 봉쇄, 민주화 인사를 체포했습니다. 서울의 봄은 끝났고, 다음은 광주였습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 02 HISTORY ══ -->
+<section class="sec bg-s1" id="history">
+  <div class="si">
+    <div class="chip">// 02 · The Uprising</div>
+    <h2 class="sh">The May 18th Uprising</h2>
+    <p class="sh-ko">5.18 민주화운동 — 1980년 5월 18일–27일</p>
+    <p class="sec-sub">Ten days that changed South Korea forever. The streets we walk today are where this happened.</p>
+
+    <!-- key numbers visual -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="sc-val">10</div>
+        <div class="sc-label">Days of uprising</div>
+        <div class="sc-sub">May 18–27, 1980</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-val" style="color:var(--red);">165+</div>
+        <div class="sc-label">Official death toll</div>
+        <div class="sc-sub">Scholars estimate 600–2,300</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-val">2,699</div>
+        <div class="sc-label">People arrested after</div>
+        <div class="sc-sub">May 17–late July 1980</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-val">~20,000</div>
+        <div class="sc-label">Soldiers deployed</div>
+        <div class="sc-sub">Against their own citizens</div>
+      </div>
+    </div>
+
+    <!-- real quote: from Gwangju Diary -->
+    <div class="rq">
+      <div class="rq-en">"It all started when machine-gun fire ripped through the heart of the city. A young man fell right next to me. He writhed and groaned. When the gunfire ceased, a few of us bystanders carried him to a hospital. Someone howled, 'Enough is enough!' Almost naturally, we sought to arm ourselves."</div>
+      <div class="rq-ko">"기관총 사격이 도심을 찢고 지나갔을 때 모든 것이 시작되었다. 바로 내 옆에서 젊은 남자가 쓰러졌다. 총성이 멈추자 우리 몇몇이 그를 병원으로 옮겼다. 누군가 울부짖었다, '이제 그만이다!' 우리는 자연스럽게 무기를 찾게 되었다."</div>
+      <div class="rq-src">— Eyewitness testimony · Gwangju Diary: Beyond Death, Beyond the Darkness of the Age (광주일기), Lee Jae-eui, 1985</div>
+    </div>
+
+    <div class="pb">
+      <p class="pe"><strong>May 18, morning.</strong> Students gathered at the gate of Chonnam National University to protest its closure. By 9:30 a.m., approximately 200 students faced 30 paratroopers. The soldiers charged. The protest moved downtown to Geumnam-ro. By the afternoon, 686 soldiers from elite airborne units arrived — and what followed was indiscriminate brutality. Clubs, bayonets, beatings. Not just students, but ordinary citizens, mothers, and children.</p>
+      <p class="pk">5월 18일 오전, 전남대 정문 앞에 학생 약 200명이 모였습니다. 공수부대가 돌격하며 시위는 금남로로 번졌습니다. 오후에는 정예 공수부대 686명이 추가 투입됐습니다.</p>
+    </div>
+
+    <div class="pb">
+      <p class="pe"><strong>May 21.</strong> Soldiers opened fire on civilians in front of the Provincial Office. Dozens killed on the spot. Outraged citizens raided police stations and reserve army armories for weapons. Women textile workers seized hundreds of rifles. Coalminers provided dynamite. <em>The citizens of Gwangju pushed the military out of the city.</em></p>
+      <p class="pk">5월 21일, 도청 앞에서 계엄군이 집단 발포했습니다. 수십 명이 현장에서 사망했습니다. 시민들은 무기를 확보해 시민군을 결성, 계엄군을 광주 외곽으로 몰아냈습니다.</p>
+    </div>
+
+    <div class="pb">
+      <p class="pe"><strong>May 22–26 — Liberated Gwangju.</strong> With no soldiers, citizens ran the city themselves. Street vendors and housewives prepared and distributed food on the streets. Blood drives were organized spontaneously. Wealthy citizens fled; ordinary people stayed and shared everything they had.</p>
+      <p class="pk">5월 22~26일, 계엄군 없는 광주에서 시민들이 스스로 도시를 운영했습니다. 거리에서 음식을 나누고, 자발적으로 헌혈하고, 치안을 유지했습니다.</p>
+    </div>
+
+    <!-- real quote: Yoon Sang-won -->
+    <div class="rq">
+      <div class="rq-en">"You guys have to tell others exactly what you witnessed today. Be witnesses to history of how we fought and died."</div>
+      <div class="rq-ko">"여러분은 오늘 목격한 것을 다른 사람들에게 정확히 전해야 합니다. 우리가 어떻게 싸우고 죽었는지 역사의 증인이 되어 주십시오."</div>
+      <div class="rq-src">— Yoon Sang-won (윤상원), Spokesman of the Citizens' Army · spoken to students on the night of May 26, 1980, hours before the final assault · Gwangju News archive</div>
+    </div>
+
+    <div class="pb">
+      <p class="pe"><strong>Dawn, May 27.</strong> Troops stormed the Provincial Office. The last defenders — who had refused to leave, believing history would remember them — were mostly killed or captured. The ten-day uprising was over. Between May 17 and late July, <strong>2,699 people were arrested</strong> in connection with the uprising. Many were tortured.</p>
+      <p class="pk">5월 27일 새벽, 계엄군이 전남도청을 진입했습니다. 끝까지 도청을 지키던 항전대원들 대부분이 사망하거나 체포됐습니다. 이후 5월 17일~7월 사이 총 2,699명이 연행됐습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 03 AFTER ══ -->
+<section class="sec bg-bg" id="after">
+  <div class="si">
+    <div class="chip">// 03 · After 5.18</div>
+    <h2 class="sh">The Road to Korean Democracy</h2>
+    <p class="sh-ko">5.18 이후 — 한국 민주주의의 여정</p>
+    <p class="sec-sub">5.18 didn't end in 1980. Its spirit became the engine of South Korea's democratic movement.</p>
+
+    <!-- road to democracy visual -->
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:1.4rem;margin-bottom:2rem;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem;">// The Long Road to Truth & Democracy</div>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">1980–87</div>
+          <div style="font-size:.78rem;color:var(--t2);">🔇 <strong style="color:var(--t1);">Suppression</strong> — Chun's regime brands 5.18 a "communist riot." The word "5.18" is forbidden. Underground pamphlets and banned testimonies circulate secretly — the truth kept alive at great personal risk.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">Jun 1987</div>
+          <div style="font-size:.78rem;color:var(--t2);">🔥 <strong style="color:var(--t1);">June Democratic Uprising (6월 민주항쟁)</strong> — Nationwide pro-democracy protests force Chun's government to accept direct presidential elections. 5.18's spirit was the driving force behind this movement.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">1988</div>
+          <div style="font-size:.78rem;color:var(--t2);">🏛️ <strong style="color:var(--t1);">Parliamentary Hearings</strong> — The first public airing of what really happened in Gwangju. Survivors testify. The "communist riot" narrative begins to collapse.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">1995</div>
+          <div style="font-size:.78rem;color:var(--t2);">⚖️ <strong style="color:var(--t1);">5.18 Special Act</strong> — Chun Doo-hwan and Roh Tae-woo are prosecuted and convicted. Chun receives a death sentence (later commuted).</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">1997</div>
+          <div style="font-size:.78rem;color:var(--t2);">🕊️ <strong style="color:var(--t1);">National Memorial Day</strong> — May 18 is officially designated as a national day of commemoration.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">2002</div>
+          <div style="font-size:.78rem;color:var(--t2);">🌿 <strong style="color:var(--t1);">National Cemetery</strong> — National May 18th Democracy Cemetery opened. Victims are laid to rest with full national honors.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">2011</div>
+          <div style="font-size:.78rem;color:var(--t2);">🌐 <strong style="color:var(--t1);">UNESCO Memory of the World</strong> — The 5.18 archives are inscribed as a UNESCO Memory of the World. The documents held in the Archive we visit today are part of this listing.</div>
+        </div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:.8rem;align-items:start;">
+          <div style="font-weight:800;font-size:.8rem;color:var(--t3);">2017</div>
+          <div style="font-size:.78rem;color:var(--t2);">🚁 <strong style="color:var(--t1);">Helicopter Gunfire Confirmed</strong> — The Ministry of Defense officially confirms that military helicopters fired on civilians — a fact denied for 37 years. The 245 bullet holes in Jeonil Building are the physical evidence.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pb">
+      <p class="pe">5.18 did not end in defeat. The underground testimonies, the banned pamphlets, the whispered truth about Gwangju became the fuel for South Korea's democracy movement. <strong>When the June 1987 Uprising finally forced free elections, it was built on the foundation of what happened in Gwangju seven years earlier.</strong> Today's South Korean democracy was paid for, in part, on these streets.</p>
+      <p class="pk">5.18은 패배로 끝나지 않았습니다. 광주의 진실은 지하에서 전해지며 1987년 6월 민주항쟁의 토대가 됐습니다. 오늘 대한민국의 민주주의는 이 거리에서 지불된 대가 위에 서 있습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 04 BOOK ══ -->
+<section class="sec bg-s1" id="book">
+  <div class="si">
+    <div class="chip">// 04 · Recommended Reading</div>
+    <h2 class="sh">Human Acts</h2>
+    <p class="sh-ko">소년이 온다 · Han Kang · 2014</p>
+    <p class="sec-sub">A novel set on the very streets we walk today. The author was born in Gwangju in 1970 — she was nine years old when the uprising happened.</p>
+
+    <!-- Nobel context card -->
+    <div style="background:rgba(255,123,41,.06);border:1px solid rgba(255,123,41,.2);border-radius:var(--r2);padding:1.2rem 1.4rem;margin-bottom:1.5rem;display:flex;gap:1rem;align-items:flex-start;">
+      <div style="font-size:1.6rem;flex-shrink:0;">🏆</div>
+      <div>
+        <div style="font-weight:700;font-size:.92rem;color:var(--t1);margin-bottom:.3rem;">Han Kang wins the 2024 Nobel Prize in Literature</div>
+        <div style="font-size:.8rem;color:var(--t2);line-height:1.75;">On October 10, 2024, Han Kang became the <strong style="color:var(--t1);">first South Korean writer</strong> and the <strong style="color:var(--t1);">first Asian woman</strong> to receive the Nobel Prize in Literature. The Swedish Academy cited her <em style="color:var(--acc);">"intense poetic prose that confronts historical traumas and exposes the fragility of human life."</em> Human Acts — the novel set in Gwangju — is considered central to that recognition.</div>
+        <div style="font-size:.7rem;color:var(--t3);margin-top:.4rem;font-family:'JetBrains Mono',monospace;">Source: nobelprize.org, Oct 10 2024</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.4rem;">
+      <div class="card-body">
+        <div class="book-layout">
+          <div class="book-cover">
+            <div class="bc-t">소년이<br>온다</div>
+            <div class="bc-bar"></div>
+            <div class="bc-e">Human Acts</div>
+            <div class="bc-a">한강 Han Kang</div>
+          </div>
+          <div>
+            <div class="meta-row">
+              <span class="meta-chip">Han Kang 한강</span>
+              <span class="meta-chip">창비, 2014</span>
+              <span class="meta-chip hot">🏆 2024 Nobel Prize</span>
+            </div>
+            <p class="pe" style="margin-bottom:.4rem;">Gwangju, May 1980. <strong>Fifteen-year-old Dong-ho</strong> goes to the Provincial Office looking for a missing friend — and ends up helping collect the bodies of the dead. Over ten days, and then across the decades that follow, the novel bears witness through <strong>six different voices</strong>.</p>
+            <p class="pk" style="margin-bottom:.9rem;">1980년 5월 광주. 열다섯 살 소년 동호는 친구를 찾으러 전남도청으로 갔다가 시신 수습을 돕게 됩니다. 소설은 여섯 명의 목소리로 5.18을 증언합니다.</p>
+            <p class="pe">Han Kang asks: <strong>"Is it true that human beings are fundamentally cruel?"</strong> Through the story of people who tried to protect each other in the face of extreme violence, she etches the meaning of dignity into every page.</p>
+            <p class="pk">한강은 묻습니다 — "인간이란 근본적으로 잔인한 존재인가?" 극한의 폭력 앞에서도 서로를 지키려 했던 광주 시민들의 이야기.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- real quote from the novel (Human Acts, Ch.3, confirmed) -->
+    <div class="rq">
+      <div class="rq-en">"It wasn't as though we didn't know how overwhelmingly the army outnumbered us. But the strange thing was, it didn't matter. Ever since the uprising began, I'd felt something coursing through me, as overwhelming as an army. Conscience. Conscience, the most terrifying thing in the world."</div>
+      <div class="rq-ko">"우리가 군대에 압도적으로 열세라는 것을 몰랐던 게 아니다. 하지만 이상하게도, 그건 중요하지 않았다. 항쟁이 시작된 이후 나는 무언가가 군대만큼이나 압도적으로 내 안을 흐르고 있음을 느꼈다. 양심. 양심, 세상에서 가장 무서운 것."</div>
+      <div class="rq-src">— Human Acts (소년이 온다), Han Kang · 창비 2014 · verified via LitCharts / published text</div>
+    </div>
+
+    <div class="card" style="margin-top:1.4rem;">
+      <div class="card-hd">
+        <div class="card-n">CHAPTERS</div>
+        <div>
+          <div class="card-t">Six Voices — 여섯 개의 목소리</div>
+          <div class="card-sub">Each chapter tells a different person's story of May 18th and its aftermath</div>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <table class="ch-table">
+          <tbody>
+            <tr class="ch-tr"><td class="ch-n">01</td><td class="ch-b">
+              <div class="ch-te">A Little Boy — Dong-ho · May 1980</div>
+              <div class="ch-en">Dong-ho helps collect and identify bodies at the Provincial Office gymnasium. <strong>This is the building we visit today.</strong></div>
+              <div class="ch-ko">열다섯 소년 동호가 도청 상무관에서 시신 수습을 돕는다. 오늘 우리가 방문하는 옛 전남도청이 배경.</div>
+            </td></tr>
+            <tr class="ch-tr"><td class="ch-n">02</td><td class="ch-b">
+              <div class="ch-te">The Soul of Jeong-dae</div>
+              <div class="ch-en">Dong-ho's friend, shot dead, sits beside his own body watching Dong-ho. The novel's most poetic and otherworldly chapter.</div>
+              <div class="ch-ko">총에 맞아 죽은 동호의 친구 정대가 자신의 시신 옆에 앉아 동호를 바라본다.</div>
+            </td></tr>
+            <tr class="ch-tr"><td class="ch-n">03</td><td class="ch-b">
+              <div class="ch-te">Seven Slaps — Eun-sook · Post-uprising</div>
+              <div class="ch-en">Eun-sook survives the uprising only to be imprisoned and tortured. Set in the former military hospital connected to today's route.</div>
+              <div class="ch-ko">살아남아 고문을 당하고 수감된 여성 은숙. 구 국군광주병원이 배경.</div>
+            </td></tr>
+            <tr class="ch-tr"><td class="ch-n">04</td><td class="ch-b">
+              <div class="ch-te">Molten Iron — A Survivor · 1980s</div>
+              <div class="ch-en">A male survivor lives with wounds far deeper than those visible on his body — trauma that outlasts the events themselves.</div>
+              <div class="ch-ko">몸에 남은 고문의 흔적보다 더 깊은 정신적 상처를 안고 살아가는 한 남성의 내면.</div>
+            </td></tr>
+            <tr class="ch-tr"><td class="ch-n">05</td><td class="ch-b">
+              <div class="ch-te">Eyes of Night — An Editor · 1990s</div>
+              <div class="ch-en">An editor publishing books about the uprising faces government persecution. Documenting the truth was itself a dangerous act.</div>
+              <div class="ch-ko">5.18 관련 책을 만들다 당국의 탄압을 받은 편집자. 역사를 기록하는 행위 자체가 위협받던 시절.</div>
+            </td></tr>
+            <tr class="ch-tr"><td class="ch-n">06</td><td class="ch-b">
+              <div class="ch-te">Come to the Tree in Bloom — Dong-ho's Mother · 2010s</div>
+              <div class="ch-en">A mother's grief never ends, even decades later. The final chapter carries Han Kang's own voice — a meeting between the living and the dead.</div>
+              <div class="ch-ko">수십 년이 지나도 끝나지 않는 어머니의 슬픔. 한강 자신의 목소리가 녹아있는 마지막 챕터.</div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="connect">
+      <div class="connect-lbl">📍 Connection to today's route</div>
+      <div class="connect-en">Where Dong-ho collected bodies → <strong>Provincial Office gymnasium</strong> · Where Eun-sook was imprisoned → <strong>Former Military Hospital</strong> · Where soldiers fired on the crowd → <strong>Geumnam-ro</strong></div>
+      <div class="connect-ko">동호가 시신을 수습한 곳 → 옛 전남도청 상무관 · 은숙이 갇혔던 곳 → 구 국군광주병원 · 집단 발포 현장 → 금남로</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 05 SITES ══ -->
+<section class="sec bg-bg" id="sites">
+  <div class="si">
+    <div class="chip">// 05 · Today's Route</div>
+    <h2 class="sh">Five Historic Sites</h2>
+    <p class="sh-ko">오늘의 방문지 — Walking the Memory</p>
+    <p class="sec-sub">What to look for — and think about — at each place we visit today.</p>
+
+    <div class="site-card">
+      <div class="sc-hd"><div class="sc-idx">01</div><div>
+        <div class="sc-nm">Geumnam-ro · 금남로</div>
+        <div class="sc-nm-sub">❤️ Heart of the Uprising · 광주 민주화운동의 심장부</div>
+      </div></div>
+      <div class="sc-bd">
+        <p class="sc-en">The heart of the May 18th Uprising. On May 21st, 1980, troops <strong style="color:var(--red);">opened fire on civilians on this exact street</strong> — people fell on the same pavement we walk on today. Now preserved as a symbol of the democracy movement. The annual May Democracy Festival is held here every year.</p>
+        <p class="sc-ko">5.18의 심장부. 1980년 5월 21일 바로 이 거리에서 집단 발포가 이루어졌습니다. 현재는 민주화운동 상징 거리로, 매년 5월 민주화운동 대축제가 열립니다.</p>
+        <div class="tip">
+          <div class="tip-lbl">💭 Think about this</div>
+          <div class="tip-en">Tens of thousands of people stood on this wide road. When the gunfire rang out — where did they run? What does it feel like to walk where they stood?</div>
+          <div class="tip-ko">이 넓은 도로 위에 수만 명이 서 있었다. 총성이 울렸을 때, 사람들은 어디로 달아났을까.</div>
+        </div>
+        <div class="tags"><span class="tag">🔴 Site of Mass Shooting</span><span class="tag dim">🎉 Annual May Festival</span></div>
+      </div>
+    </div>
+
+    <div class="site-card">
+      <div class="sc-hd"><div class="sc-idx">02</div><div>
+        <div class="sc-nm">Former Provincial Office · 옛 전남도청</div>
+        <div class="sc-nm-sub">⚔️ The Last Stand · 최후 항전 · Human Acts backdrop</div>
+      </div></div>
+      <div class="sc-bd">
+        <p class="sc-en">The site of the <strong>final stand, dawn of May 27th.</strong> When soldiers told them to evacuate, the last defenders refused — believing: <em>"If we die here, history will remember us."</em> Now preserved alongside the National Asian Culture Complex (ACC). The gymnasium inside is where novel character Dong-ho collected bodies in <em>Human Acts</em>.</p>
+        <p class="sc-ko">5월 27일 새벽 최후 항전의 장소. 국립아시아문화전당(ACC)과 연계 보존 중. 소설 «소년이 온다»에서 동호가 시신을 수습했던 상무관이 이 건물 안에 있었습니다.</p>
+        <div class="tip">
+          <div class="tip-lbl">📖 Human Acts · Chapter 1</div>
+          <div class="tip-en">In Chapter 1 of Human Acts, Dong-ho waits in this gymnasium for his friend's body. The entire first chapter is set here — in this building.</div>
+          <div class="tip-ko">소설 1장 전체가 이 상무관 체육관을 배경으로 한다.</div>
+        </div>
+        <div class="tags"><span class="tag">⚔️ Final Stand</span><span class="tag dim">📖 Human Acts</span><span class="tag dim">ACC</span></div>
+      </div>
+    </div>
+
+    <div class="site-card">
+      <div class="sc-hd"><div class="sc-idx">03</div><div>
+        <div class="sc-nm">May 18th Archive · 5.18 민주화운동 기록관</div>
+        <div class="sc-nm-sub">🌐 UNESCO Memory of the World · 세계기록유산</div>
+      </div></div>
+      <div class="sc-bd">
+        <p class="sc-en">Originally the <strong>Catholic Center.</strong> In May 1980, a priest and staff on floors 6–7 witnessed soldiers cracking down on crowds below on Geumnam-ro — and documented it all in photographs and records. Those documents became decisive evidence of the truth. <strong>UNESCO Memory of the World since 2011.</strong></p>
+        <p class="sc-ko">원래 옛 가톨릭센터. 1980년 5월, 6·7층에서 금남로의 진압 장면을 목격하고 사진과 기록으로 남겼습니다. 그 기록들이 역사적 진실의 결정적 증거가 됐습니다. 2011년 유네스코 세계기록유산.</p>
+        <div class="tip">
+          <div class="tip-lbl">✍️ Remember</div>
+          <div class="tip-en">The people who took those photographs risked their lives to do so. Documenting the truth was itself an act of resistance.</div>
+          <div class="tip-ko">당시 사진을 찍은 사람들은 목숨을 걸었다. 기록하는 행위 자체가 저항이었다.</div>
+        </div>
+        <div class="tags"><span class="tag">🌐 UNESCO Memory of the World</span><span class="tag dim">Catholic Center</span></div>
+      </div>
+    </div>
+
+    <div class="site-card">
+      <div class="sc-hd"><div class="sc-idx">04</div><div>
+        <div class="sc-nm">Jeonil Building 245 · 전일빌딩 245</div>
+        <div class="sc-nm-sub">🚁 245 Bullet Holes from Helicopter Gunfire · 헬기 기총 사격 흔적</div>
+      </div></div>
+      <div class="sc-bd">
+        <p class="sc-en">The <strong style="color:var(--acc);">245</strong> in the building's name is the count of bullet holes left by helicopter gunfire. Denied for <strong>37 years</strong> — officially confirmed by the Ministry of Defense only in 2017. Exhibitions on floors 7–9. Helicopter attack animation plays on a regular schedule. VR experience available.</p>
+        <p class="sc-ko">건물 이름 245는 헬기 기총 사격 탄흔의 수입니다. 37년간 부인됐다가 2017년 국방부 조사로 공식 확인됐습니다. 7·8·9층 전시관, 기총 사격 애니메이션, VR 체험 가능.</p>
+        <div class="tip">
+          <div class="tip-lbl">🔍 The Number 245</div>
+          <div class="tip-en">245 bullet holes on one building. From the 7th-floor cafe terrace, looking down at Geumnam-ro, you can imagine what the gunners saw from the helicopter above in 1980.</div>
+          <div class="tip-ko">한 건물에 245개의 총탄 자국. 7층 카페 테라스에서 금남로를 내려다보면 헬기에서의 시야가 느껴진다.</div>
+        </div>
+        <div class="tags"><span class="tag">🚁 245 Bullet Holes</span><span class="tag dim">7–9F Exhibition</span><span class="tag dim">VR</span><span class="tag dim">☕ 7F Cafe</span></div>
+      </div>
+    </div>
+
+    <div class="site-card">
+      <div class="sc-hd"><div class="sc-idx">05</div><div>
+        <div class="sc-nm">National May 18th Democracy Cemetery · 국립 5.18 민주묘지</div>
+        <div class="sc-nm-sub">🕊️ Resting place of those who died · 희생자들이 잠든 곳</div>
+      </div></div>
+      <div class="sc-bd">
+        <p class="sc-en">The resting place of those who died, established as a national cemetery in 2002. Each gravestone carries a name, an age, and the circumstances of death. <strong>Twenty years old. Sixteen. Fifty.</strong> Every May 18th, the national memorial ceremony is held here and <em>"March for the Beloved" (임을 위한 행진곡)</em> fills the air.</p>
+        <p class="sc-ko">항쟁 희생자들이 잠든 국립묘지 (2002년 조성). 묘비 하나하나에 이름과 나이, 희생 경위가 새겨져 있습니다. 매년 5월 18일 국가 기념식에서 «임을 위한 행진곡»이 울려 퍼집니다.</p>
+        <div class="tip">
+          <div class="tip-lbl">🕊️ At This Place</div>
+          <div class="tip-en">Please read the names and ages on the gravestones. The moment you see them as people — not statistics — history becomes real.</div>
+          <div class="tip-ko">묘비의 이름과 나이를 직접 읽어보길. 숫자가 아닌 사람으로 마주하는 순간, 역사가 현실이 된다.</div>
+        </div>
+        <div class="tags"><span class="tag">🌿 National Cemetery</span><span class="tag dim">🎵 March for the Beloved</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 06 FOOD ══ -->
+<section class="sec bg-s1" id="food">
+  <div class="si">
+    <div class="chip">// 06 · Local Eats</div>
+    <h2 class="sh">Geumnam-ro Food Guide</h2>
+    <p class="sh-ko">충장로 먹거리</p>
+    <p class="sec-sub">In 1980, citizens shared rice balls with strangers on these streets. Today, we eat together too.<br><span style="font-size:.9em;color:var(--t3);">1980년에도 시민들은 주먹밥을 나눠 먹었다. 오늘도 함께 먹자.</span></p>
+
+    <div class="food-grid">
+      <div class="fc">
+        <div class="fc-type">🍞 Bakery</div>
+        <div class="fc-name">Bebbiere · 베비에르 문화전당점</div>
+        <div class="fc-en">Run by a <strong style="color:var(--t1);">National Master Baker (제빵명인)</strong> — a title held by only 7 people in all of Korea.</div>
+        <div class="fc-ko">한국에 단 7명뿐인 제빵명인이 운영하는 빵집.</div>
+        <div class="fc-meta">📍 광주 동구 광산동 · 1.7km · 062-226-0696 · Open 08:30~</div>
+      </div>
+      <div class="fc">
+        <div class="fc-type">🍧 Dessert</div>
+        <div class="fc-name">Canmoa · 캔모아 충장로 2호점</div>
+        <div class="fc-en">One of the <strong style="color:var(--t1);">last surviving Canmoa locations</strong> in Korea. Gwangju-style bingsu (shaved ice) and local sweets.</div>
+        <div class="fc-ko">국내에 몇 개 남지 않은 캔모아 중 하나. 광주식 빙수와 디저트.</div>
+        <div class="fc-meta">📍 충장로 · Geumnam-ro</div>
+      </div>
+      <div class="fc">
+        <div class="fc-type">🥬 Bunsik · Korean snacks</div>
+        <div class="fc-name">Eunseong Gimbap · 은성김밥</div>
+        <div class="fc-en">Local favourite at the entrance of Geumnam-ro. Try <strong style="color:var(--t1);">fried lettuce wraps (상추튀김)</strong> — a Gwangju specialty. ★4.11 · 675 reviews.</div>
+        <div class="fc-ko">상추튀김 등 광주식 분식. 충장로 초입 현지인 단골집. ★4.11.</div>
+        <div class="fc-meta">📍 충장로 초입</div>
+      </div>
+      <div class="fc">
+        <div class="fc-type">🍡 Traditional Rice Cakes · 떡</div>
+        <div class="fc-name">Changeok Tteok · 창억떡집</div>
+        <div class="fc-en">Founded 1965. Gwangju's institution for traditional Korean rice cakes (tteok 떡).</div>
+        <div class="fc-tip">
+          <div class="fc-tl"><strong>동명점 (970m)</strong> — Closer, easier to reach <em>· 더 가깝다</em></div>
+          <div class="fc-tl"><strong>중흥본점 (2.1km)</strong> — Original, usually less wait · Open 08:00~ <em>· 웨이팅 없는 편</em></div>
+        </div>
+        <div class="fc-meta">📍 동명점 Dongmyeong-dong · 본점 Jungheung-dong</div>
+      </div>
+      <div class="fc wide">
+        <div class="fc-type">🍞 Century Bakery · 백년가게</div>
+        <div class="fc-name">Gungjeon Bakery · 궁전제과 충장점</div>
+        <div class="fc-en">Gwangju's most legendary bakery. <strong style="color:var(--t1);">Government-certified century-old establishment (백년가게).</strong> 7,700+ visitor reviews. Must-try: <strong style="color:var(--t1);">Dinosaur Egg Bread (공룡알빵)</strong> & <strong style="color:var(--t1);">Butterfly Pie (나비파이)</strong>.</div>
+        <div class="fc-ko">공룡알빵, 나비파이 — 광주 빵집의 전설. 방문자 리뷰 7,737건. 중소벤처기업부 인증 백년가게.</div>
+        <div class="fc-meta">📍 충장로 · Geumnam-ro · Certified Century Store</div>
+      </div>
+    </div>
+
+    <div class="cafe-note">
+      <div style="font-size:1rem;flex-shrink:0;margin-top:.1rem;">☕</div>
+      <div class="cafe-txt">
+        <strong>Jeonil Building 7F Cafe · 전일빌딩 245 7층 카페</strong> — Highly recommended after the exhibition. Sit on the terrace and look down at Geumnam-ro — the same vantage point as the helicopters in 1980.
+        <em>Also nearby: 베비에르 롯데백화점 광주점 · 062-221-0696 · 광주 동구 대인동 · 1.7km</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTRO -->
+<footer class="outro">
+  <div class="outro-badge">KOPLE™</div>
+  <p class="outro-q">"To remember history is the first step toward ensuring it never happens again."</p>
+  <p class="outro-ko">역사를 기억하는 것이 다시는 그 일이 일어나지 않도록 하는 첫걸음입니다.</p>
+  <p style="font-size:.8rem;color:var(--t3);margin-top:.6rem;">한국을 내 친구의 나라로</p>
+  <p class="outro-c">contact@thekople.com</p>
+</footer>
+
+<script>
+// TOC smooth scroll — offset for fixed topbar
+document.querySelectorAll('a.toc-btn[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if (!el) return;
+    window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 52 - 16, behavior: 'smooth' });
+  });
+});
+
+// TOC scroll-spy
+const secIds = ['context','history','after','book','sites','food'];
+const btnMap = {};
+secIds.forEach(id => { btnMap[id] = document.querySelector(`.toc-btn[href="#${id}"]`); });
+new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      Object.values(btnMap).forEach(b => b && b.classList.remove('on'));
+      if (btnMap[e.target.id]) btnMap[e.target.id].classList.add('on');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' })
+.observe && secIds.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        Object.values(btnMap).forEach(b => b && b.classList.remove('on'));
+        if (btnMap[e.target.id]) btnMap[e.target.id].classList.add('on');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' }).observe(el);
+});
+
+// Site card & timeline reveal
+const revealIO = new IntersectionObserver((entries, obs) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('vis'), i * 70);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: .06 });
+document.querySelectorAll('.site-card').forEach(el => revealIO.observe(el));
+
+const tlIO = new IntersectionObserver((entries, obs) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('vis'), i * 55);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: .04 });
+document.querySelectorAll('.tl-tr').forEach(el => tlIO.observe(el));
+</script>
+</body>
+</html>
